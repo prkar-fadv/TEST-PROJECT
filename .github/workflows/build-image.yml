@@ -1,0 +1,131 @@
+name: Build & Publish Golden Image (Packer → Azure SIG)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_sku:
+        description: "Base OS image SKU (Oracle-Linux). Only override allowed."
+        required: false
+        default: "ol97-lvm-gen2"
+
+permissions:
+  id-token: write   # for OIDC
+  contents: read
+
+env:
+  # Infra variables (adjust to your environment)
+  AZ_SUBSCRIPTION_ID: "<your-subscription-id>"
+  RG_NAME: "rg-hybrid-packer-sb"
+  LOCATION: "eastus2"
+  GALLERY_NAME: "fa-hybrid-golden-images"  # no spaces
+  GALLERY_DESC: "FA Hybrid Golden Images Registry"
+  IMAGE_DEF: "fa-oel-9-golden"            # image definition name
+  IMAGE_VERSION: "1.0.0"
+  # Optional: avoid Packer plugin rate-limit during `packer init`
+  PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Bootstrap login using OIDC (no secrets)
+      - name: "Azure login (OIDC)"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}       # App reg with federated credential
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZ_SUBSCRIPTION_ID }}
+
+      # 2) (One-time per subscription) ensure providers are registered
+      - name: "Ensure provider registrations"
+        shell: bash
+        run: |
+          set -euxo pipefail
+          az provider register --namespace Microsoft.Network
+          az provider register --namespace Microsoft.Compute
+          az provider register --namespace Microsoft.Storage
+          # Wait until registered (best-effort)
+          for ns in Microsoft.Network Microsoft.Compute Microsoft.Storage; do
+            az provider show --namespace $ns --query registrationState -o tsv
+          done
+
+      # 3) Create ephemeral SP with Contributor on target RG
+      - name: "Create ephemeral SP with Contributor on RG"
+        id: sp
+        shell: bash
+        run: |
+          set -euxo pipefail
+          NAME="gh-ephemeral-packer-${GITHUB_RUN_ID}"
+          JSON=$(az ad sp create-for-rbac \
+            --name "$NAME" \
+            --role "Contributor" \
+            --scopes "/subscriptions/${AZ_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
+            --query "{appId:appId, password:password, tenant:tenant, objectId:id}" -o json)
+          echo "$JSON" | jq -r '.'
+          echo "appId=$(echo "$JSON" | jq -r '.appId')"       >> $GITHUB_OUTPUT
+          echo "password=$(echo "$JSON" | jq -r '.password')" >> $GITHUB_OUTPUT
+          echo "tenant=$(echo "$JSON" | jq -r '.tenant')"     >> $GITHUB_OUTPUT
+          echo "objectId=$(echo "$JSON" | jq -r '.objectId')" >> $GITHUB_OUTPUT
+
+      # 4) Ensure the gallery exists (Bicep)
+      - name: "Deploy Bicep: compute gallery"
+        shell: bash
+        run: |
+          set -euxo pipefail
+          az deployment group create \
+            --resource-group "${RG_NAME}" \
+            --template-file infra/sig.bicep \
+            --parameters @infra/sig.parameters.json \
+            --parameters galleryName="${GALLERY_NAME}" location="${LOCATION}" galleryDescription="${GALLERY_DESC}"
+
+      # 5) Ensure the image definition exists (idempotent)
+      - name: "Ensure image definition"
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if ! az sig image-definition show -g "${RG_NAME}" --gallery-name "${GALLERY_NAME}" -n "${IMAGE_DEF}" >/dev/null 2>&1; then
+            az sig image-definition create -g "${RG_NAME}" --gallery-name "${GALLERY_NAME}" -n "${IMAGE_DEF}" \
+              --publisher "FA" --offer "HybridOEL" --sku "oel-9" --os-type "Linux" --hyper-v-generation "V2" \
+              --location "${LOCATION}"
+          fi
+
+      # 6) Setup Packer
+      - name: "Setup Packer"
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: "latest"
+
+      # 7) Run Packer (using the ephemeral SP credentials)
+      - name: "Packer init/validate/build"
+        shell: bash
+        env:
+          ARM_CLIENT_ID:       ${{ steps.sp.outputs.appId }}
+          ARM_CLIENT_SECRET:   ${{ steps.sp.outputs.password }}
+          ARM_TENANT_ID:       ${{ steps.sp.outputs.tenant }}
+          ARM_SUBSCRIPTION_ID: ${{ env.AZ_SUBSCRIPTION_ID }}
+        run: |
+          set -euxo pipefail
+          cd image
+          packer init fa-oel-9.pkr.hcl
+          packer validate fa-oel-9.pkr.hcl
+          packer build \
+            -var "location=${LOCATION}" \
+            -var "gallery_resource_group=${RG_NAME}" \
+            -var "gallery_name=${GALLERY_NAME}" \
+            -var "image_definition_name=${IMAGE_DEF}" \
+            -var "image_version=${IMAGE_VERSION}" \
+            -var "image_sku=${{ github.event.inputs.image_sku }}" \
+            fa-oel-9.pkr.hcl
+
+      # 8) Cleanup: delete the ephemeral SP
+      - name: "Delete ephemeral SP"
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # Use application (appId) or objectId; --id accepts either appId URI, appId, or objectId
+          az ad sp delete --id "${{ steps.sp.outputs.appId }}"
