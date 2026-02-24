@@ -1,1 +1,9 @@
-
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": { "value": "fa-oel9-testvm01" },
+    "adminUsername": { "value": "azureuser" },
+    "adminPassword": { "value": "D00wd3R!" },
+    "imageVersion": { "value": "latest" }
+ .yml
