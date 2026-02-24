@@ -80,7 +80,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ env.AZ_SUBSCRIPTION_ID }}
         run: |
           set -euxo pipefail
-          cd image
+          cd Image
           packer init fa-oel-9.pkr.hcl
           packer validate fa-oel-9.pkr.hcl
           packer build \
@@ -90,5 +90,5 @@ jobs:
             -var "image_definition_name=${IMAGE_DEF}" \
             -var "image_version=${IMAGE_VERSION}" \
             -var "image_sku=${{ github.event.inputs.image_sku }}" \
-            fa-oel-9.pkr.hcl
+            ./Image/fa-oel-9.pkr.hcl
 
