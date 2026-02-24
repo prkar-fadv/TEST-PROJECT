@@ -122,10 +122,10 @@ jobs:
             fa-oel-9.pkr.hcl
 
       # 8) Cleanup: delete the ephemeral SP
-      - name: "Delete ephemeral SP"
-        if: always()
-        shell: bash
-        run: |
-          set -euxo pipefail
-          # Use application (appId) or objectId; --id accepts either appId URI, appId, or objectId
-          az ad sp delete --id "${{ steps.sp.outputs.appId }}"
+      #- name: "Delete ephemeral SP"
+    #    if: always()
+    #    shell: bash
+   #     run: |
+    #      set -euxo pipefail
+   #       # Use application (appId) or objectId; --id accepts either appId URI, appId, or objectId
+    #      az ad sp delete --id "${{ steps.sp.outputs.appId }}"
