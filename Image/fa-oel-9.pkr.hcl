@@ -40,7 +40,7 @@ source "azure-arm" "oel" {
   os_type  = "Linux"
   location = var.location
   vm_size  = "Standard_D2s_v3"
-
+  build_resource_group_name = "rg-hybrid-packer-sb"
   # Base image (Marketplace)
   image_publisher = "Oracle"
   image_offer     = "Oracle-Linux"
@@ -79,6 +79,7 @@ build {
     ]
   }
 }
+
 
 
 
