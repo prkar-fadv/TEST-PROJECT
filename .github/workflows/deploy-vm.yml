@@ -51,14 +51,17 @@ jobs:
 
       - name: Deploy VM using Bicep
         run: |
+          
+          set -euxo pipefail
           az deployment group create \
-            --resource-group "${RG_NAME}" \
+            --resource-group "${{ env.RG_NAME }}" \
             --template-file ./Infra/vm.bicep \
-            --parameters vmName="${{ github.event.inputs.vmName }}" \
-                         vmSize="${{ github.event.inputs.vmSize }}" \
-                         imageVersion="${{ github.event.inputs.imageVersion }}" \
-                         adminUsername="${{ github.event.inputs.adminUsername }}" \
-                         adminPassword="${{ github.event.inputs.adminPassword }}" \
-                         galleryName="${GALLERY_NAME}" \
-                         imageDefinitionName="${IMAGE_DEF}" \
-                         location="${LOCATION}"
+            --parameters vmName="fa-oel9-testvm01" \
+                   vmSize="Standard_D2s_v3" \
+                   imageVersion="latest" \
+                   adminUsername="azureuser" \
+                   adminPassword="${{ github.event.inputs.adminPassword }}" \
+                   galleryName="${{ env.GALLERY_NAME }}" \
+                   imageDefinitionName="${{ env.IMAGE_DEF }}" \
+                   location="${{ env.LOCATION }}"
+
