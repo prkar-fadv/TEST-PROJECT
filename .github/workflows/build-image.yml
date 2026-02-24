@@ -41,17 +41,17 @@ jobs:
           subscription-id: ${{ env.AZ_SUBSCRIPTION_ID }}
 
       # 2) (One-time per subscription) ensure providers are registered
-      - name: "Ensure provider registrations"
-        shell: bash
-        run: |
-          set -euxo pipefail
-          az provider register --namespace Microsoft.Network
-          az provider register --namespace Microsoft.Compute
-          az provider register --namespace Microsoft.Storage
-          # Wait until registered (best-effort)
-          for ns in Microsoft.Network Microsoft.Compute Microsoft.Storage; do
-            az provider show --namespace $ns --query registrationState -o tsv
-          done
+     # - name: "Ensure provider registrations"
+    #  shell: bash
+    #    run: |
+     #     set -euxo pipefail
+     #     az provider register --namespace Microsoft.Network
+     #     az provider register --namespace Microsoft.Compute
+      #    az provider register --namespace Microsoft.Storage
+     #     # Wait until registered (best-effort)
+     #     for ns in Microsoft.Network Microsoft.Compute Microsoft.Storage; do
+     #       az provider show --namespace $ns --query registrationState -o tsv
+     #     done
 
       # 3) Create ephemeral SP with Contributor on target RG
       - name: "Create ephemeral SP with Contributor on RG"
