@@ -80,7 +80,7 @@ jobs:
             --resource-group "${RG_NAME}" \
             --template-file ./Infra/sig.bicep \
             --parameters @./Infra/sig.parameters.json \
-            --parameters galleryName="${GALLERY_NAME}" location="${LOCATION}" galleryDescription="${GALLERY_DESC}"
+            --parameters galleryName=fa_hybrid_golden_images location="${LOCATION}" galleryDescription="FA Hybrid Golden Images Registry"
 
       # 5) Ensure the image definition exists (idempotent)
       - name: "Ensure image definition"
