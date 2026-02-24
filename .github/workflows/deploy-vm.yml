@@ -1,0 +1,64 @@
+name: Deploy VM from Golden Image (Azure SIG)
+
+on:
+  workflow_dispatch:
+    inputs:
+      vmName:
+        description: "Name of the VM"
+        required: true
+        default: "fa-oel9-testvm01"
+      vmSize:
+        description: "VM Size"
+        type: choice
+        options:
+          default: Standard_D2s_v3
+      imageVersion:
+        description: "Image version from SIG"
+        required: true
+        default: "latest"
+      adminUsername:
+        description: "Admin username"
+        required: true
+        default: "azureuser"
+      adminPassword:
+        description: "Admin password"
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RG_NAME: "rg-hybrid-packer-sb"
+  LOCATION: "eastus2"
+  GALLERY_NAME: "fa_hybrid_golden_images"
+  IMAGE_DEF: "fa-oel-9-golden"
+
+jobs:
+  deploy-vm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy VM using Bicep
+        run: |
+          az deployment group create \
+            --resource-group "${RG_NAME}" \
+            --template-file ./Infra/vm.bicep \
+            --parameters vmName="${{ github.event.inputs.vmName }}" \
+                         vmSize="${{ github.event.inputs.vmSize }}" \
+                         imageVersion="${{ github.event.inputs.imageVersion }}" \
+                         adminUsername="${{ github.event.inputs.adminUsername }}" \
+                         adminPassword="${{ github.event.inputs.adminPassword }}" \
+                         galleryName="${GALLERY_NAME}" \
+                         imageDefinitionName="${IMAGE_DEF}" \
+                         location="${LOCATION}"
