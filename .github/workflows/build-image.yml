@@ -73,6 +73,12 @@ jobs:
 
       # 4) Ensure the gallery exists (Bicep)
       - name: "Deploy Bicep: compute gallery"
+        
+        env:
+          GALLERY_NAME: "fa_hybrid_golden_images"   # MUST match your valid gallery name
+          IMAGE_DEF: "fa-oel-9-golden"
+          LOCATION: "eastus2"
+
         shell: bash
         run: |
           set -euxo pipefail
