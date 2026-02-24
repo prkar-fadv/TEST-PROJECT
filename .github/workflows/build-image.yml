@@ -78,8 +78,8 @@ jobs:
           set -euxo pipefail
           az deployment group create \
             --resource-group "${RG_NAME}" \
-            --template-file infra/sig.bicep \
-            --parameters @infra/sig.parameters.json \
+            --template-file ./infra/sig.bicep \
+            --parameters @./infra/sig.parameters.json \
             --parameters galleryName="${GALLERY_NAME}" location="${LOCATION}" galleryDescription="${GALLERY_DESC}"
 
       # 5) Ensure the image definition exists (idempotent)
