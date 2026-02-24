@@ -3,7 +3,8 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": { "value": "eastus2" },
-    "galleryName": { "value": "fa-hybrid-golden-images" },
+    "galleryName": { "value": "fa_hybrid_golden_images" },
     "galleryDescription": { "value": "FA Hybrid Golden Images Registry" }
   }
 }
+
