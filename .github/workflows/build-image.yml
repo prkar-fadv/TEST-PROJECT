@@ -14,10 +14,10 @@ permissions:
 
 env:
   # Infra variables (adjust to your environment)
-  AZ_SUBSCRIPTION_ID: "<your-subscription-id>"
+  AZ_SUBSCRIPTION_ID: "03b4783d-f384-48d7-bad5-3e3fc727a532"
   RG_NAME: "rg-hybrid-packer-sb"
   LOCATION: "eastus2"
-  GALLERY_NAME: "fa-hybrid-golden-images"  # no spaces
+  GALLERY_NAME: "fa_hybrid_golden_images"  # no spaces
   GALLERY_DESC: "FA Hybrid Golden Images Registry"
   IMAGE_DEF: "fa-oel-9-golden"            # image definition name
   IMAGE_VERSION: "1.0.0"
@@ -53,23 +53,7 @@ jobs:
             az provider show --namespace $ns --query registrationState -o tsv
           done
 
-      # 3) Create ephemeral SP with Contributor on target RG
-      - name: "Create ephemeral SP with Contributor on RG"
-        id: sp
-        shell: bash
-        run: |
-          set -euxo pipefail
-          NAME="gh-ephemeral-packer-${GITHUB_RUN_ID}"
-          JSON=$(az ad sp create-for-rbac \
-            --name "$NAME" \
-            --role "Contributor" \
-            --scopes "/subscriptions/${AZ_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
-            --query "{appId:appId, password:password, tenant:tenant, objectId:id}" -o json)
-          echo "$JSON" | jq -r '.'
-          echo "appId=$(echo "$JSON" | jq -r '.appId')"       >> $GITHUB_OUTPUT
-          echo "password=$(echo "$JSON" | jq -r '.password')" >> $GITHUB_OUTPUT
-          echo "tenant=$(echo "$JSON" | jq -r '.tenant')"     >> $GITHUB_OUTPUT
-          echo "objectId=$(echo "$JSON" | jq -r '.objectId')" >> $GITHUB_OUTPUT
+    
 
       # 4) Ensure the gallery exists (Bicep)
       - name: "Deploy Bicep: compute gallery"
@@ -121,11 +105,3 @@ jobs:
             -var "image_sku=${{ github.event.inputs.image_sku }}" \
             fa-oel-9.pkr.hcl
 
-      # 8) Cleanup: delete the ephemeral SP
-      - name: "Delete ephemeral SP"
-        if: always()
-        shell: bash
-        run: |
-          set -euxo pipefail
-          # Use application (appId) or objectId; --id accepts either appId URI, appId, or objectId
-          az ad sp delete --id "${{ steps.sp.outputs.appId }}"
