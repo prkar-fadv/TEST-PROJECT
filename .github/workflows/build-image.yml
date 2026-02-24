@@ -14,7 +14,7 @@ permissions:
 
 env:
   # Infra variables (adjust to your environment)
-  AZ_SUBSCRIPTION_ID: "03b4783d-f384-48d7-bad5-3e3fc727a532"
+  AZ_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
   RG_NAME: "rg-hybrid-packer-sb"
   LOCATION: "eastus2"
   GALLERY_NAME: "fa_hybrid_golden_images"  # no spaces
@@ -38,22 +38,9 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}       # App reg with federated credential
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZ_SUBSCRIPTION_ID }}
+          subscription-id: ${{ secrets.AZ_SUBSCRIPTION_ID }}
 
-      # 2) (One-time per subscription) ensure providers are registered
-      - name: "Ensure provider registrations"
-        shell: bash
-        run: |
-          set -euxo pipefail
-          az provider register --namespace Microsoft.Network
-          az provider register --namespace Microsoft.Compute
-          az provider register --namespace Microsoft.Storage
-          # Wait until registered (best-effort)
-          for ns in Microsoft.Network Microsoft.Compute Microsoft.Storage; do
-            az provider show --namespace $ns --query registrationState -o tsv
-          done
-
-    
+        
 
       # 4) Ensure the gallery exists (Bicep)
       - name: "Deploy Bicep: compute gallery"
@@ -62,8 +49,8 @@ jobs:
           set -euxo pipefail
           az deployment group create \
             --resource-group "${RG_NAME}" \
-            --template-file infra/sig.bicep \
-            --parameters @infra/sig.parameters.json \
+            --template-file ./Infra/sig.bicep \
+            --parameters @./Infra/sig.parameters.json \
             --parameters galleryName="${GALLERY_NAME}" location="${LOCATION}" galleryDescription="${GALLERY_DESC}"
 
       # 5) Ensure the image definition exists (idempotent)
