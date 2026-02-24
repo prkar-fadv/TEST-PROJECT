@@ -54,22 +54,22 @@ jobs:
      #     done
 
       # 3) Create ephemeral SP with Contributor on target RG
-      - name: "Create ephemeral SP with Contributor on RG"
-        id: sp
-        shell: bash
-        run: |
-          set -euxo pipefail
-          NAME="gh-ephemeral-packer-${GITHUB_RUN_ID}"
-          JSON=$(az ad sp create-for-rbac \
-            --name "$NAME" \
-            --role "Contributor" \
-            --scopes "/subscriptions/${AZ_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
-            --query "{appId:appId, password:password, tenant:tenant, objectId:id}" -o json)
-          echo "$JSON" | jq -r '.'
-          echo "appId=$(echo "$JSON" | jq -r '.appId')"       >> $GITHUB_OUTPUT
-          echo "password=$(echo "$JSON" | jq -r '.password')" >> $GITHUB_OUTPUT
-          echo "tenant=$(echo "$JSON" | jq -r '.tenant')"     >> $GITHUB_OUTPUT
-          echo "objectId=$(echo "$JSON" | jq -r '.objectId')" >> $GITHUB_OUTPUT
+      #- name: "Create ephemeral SP with Contributor on RG"
+      #  id: sp
+     #   shell: bash
+      #  run: |
+      #    set -euxo pipefail
+      #    NAME="gh-ephemeral-packer-${GITHUB_RUN_ID}"
+      #    JSON=$(az ad sp create-for-rbac \
+      #      --name "$NAME" \
+      #      --role "Contributor" \
+      #      --scopes "/subscriptions/${AZ_SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}" \
+     #       --query "{appId:appId, password:password, tenant:tenant, objectId:id}" -o json)
+       #   echo "$JSON" | jq -r '.'
+      #    echo "appId=$(echo "$JSON" | jq -r '.appId')"       >> $GITHUB_OUTPUT
+      #    echo "password=$(echo "$JSON" | jq -r '.password')" >> $GITHUB_OUTPUT
+      #    echo "tenant=$(echo "$JSON" | jq -r '.tenant')"     >> $GITHUB_OUTPUT
+      #    echo "objectId=$(echo "$JSON" | jq -r '.objectId')" >> $GITHUB_OUTPUT
 
       # 4) Ensure the gallery exists (Bicep)
       - name: "Deploy Bicep: compute gallery"
