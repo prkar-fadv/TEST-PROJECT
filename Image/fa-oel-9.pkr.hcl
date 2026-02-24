@@ -36,7 +36,7 @@ variable "image_version" {
 # --------------------------
 source "azure-arm" "oel" {
   # Auth from env: ARM_TENANT_ID, ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET
-
+  use_azure_cli_auth = true
   os_type  = "Linux"
   location = var.location
   vm_size  = "Standard_D2s_v3"
@@ -80,3 +80,4 @@ build {
   }
 }
 ``
+
