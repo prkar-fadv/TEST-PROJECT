@@ -14,7 +14,7 @@ permissions:
 
 env:
   # Infra variables (adjust to your environment)
-  AZ_SUBSCRIPTION_ID: "<your-subscription-id>"
+  #AZ_SUBSCRIPTION_ID: ${{ env.AZ_SUBSCRIPTION_ID }}
   RG_NAME: "rg-hybrid-packer-sb"
   LOCATION: "eastus2"
   GALLERY_NAME: "fa-hybrid-golden-images"  # no spaces
