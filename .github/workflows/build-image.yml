@@ -73,22 +73,21 @@ jobs:
       # 7) Run Packer (using the ephemeral SP credentials)
       - name: "Packer init/validate/build"
         shell: bash
-        env:
-          ARM_CLIENT_ID:       ${{ steps.sp.outputs.appId }}
-          ARM_CLIENT_SECRET:   ${{ steps.sp.outputs.password }}
-          ARM_TENANT_ID:       ${{ steps.sp.outputs.tenant }}
-          ARM_SUBSCRIPTION_ID: ${{ env.AZ_SUBSCRIPTION_ID }}
+        
         run: |
           set -euxo pipefail
           cd Image
           packer init fa-oel-9.pkr.hcl
-          packer validate fa-oel-9.pkr.hcl
+          
+          packer validate \
+            -var-file=vars.pkrvars.hcl \
+             -var "image_sku=${{ github.event.inputs.image_sku }}" \
+              fa-oel-9.pkr.hcl
+
+          
           packer build \
-            -var "location=${LOCATION}" \
-            -var "gallery_resource_group=${RG_NAME}" \
-            -var "gallery_name=${GALLERY_NAME}" \
-            -var "image_definition_name=${IMAGE_DEF}" \
-            -var "image_version=${IMAGE_VERSION}" \
+            -var-file=vars.pkrvars.hcl \
             -var "image_sku=${{ github.event.inputs.image_sku }}" \
-            ./Image/fa-oel-9.pkr.hcl
+             fa-oel-9.pkr.hcl
+
 
