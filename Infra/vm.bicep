@@ -30,19 +30,19 @@ param vnetName string = 'fa-hybrid-vnet'
 param subnetName string = 'default'
 
 //
-// Build the SIG image version resource ID as ONE interpolated string.
-// (Correct Bicep interpolation; avoid '+' concatenation.)
+// Build the SIG image version resource ID (correct Bicep interpolation)
+// This ID format is the supported way to deploy from Azure Compute Gallery.
 //
 var sigImageId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Compute/galleries/${galleryName}/images/${imageDefinitionName}/versions/${imageVersion}'
-// String interpolation with ${} is the idiomatic way in Bicep. [1](https://github.com/hashicorp/setup-packer)[2](https://www.infralovers.com/blog/2024-10-17-hashicorp-packer-github-actions/)
+// Ref: Create VM from SIG image version via imageReference.id. [4](https://www.madhan.app/blogs/036-packer-github-actions-vm/)
 
 //
-// Reference existing VNet (syntax with `existing` per Bicep docs).
+// Reference the existing VNet (recommended existing-resource syntax).
 //
 resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' existing = {
   name: vnetName
 }
-// Existing resource usage is documented in Bicep. [4](https://docs.azure.cn/en-us/virtual-machines/linux/image-builder-json)
+// Ref: Bicep ‘existing’ resources. [5](https://docs.azure.cn/en-us/virtual-machines/linux/image-builder-json)
 
 var subnetId = '${vnet.id}/subnets/${subnetName}'
 
@@ -95,3 +95,15 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
           storageAccountType: 'Premium_LRS'
         }
       }
+    }
+    networkProfile: {
+      networkInterfaces: [
+        {
+          id: nic.id
+        }
+      ]
+    }
+  }
+}
+
+output vmId string = vm.id
