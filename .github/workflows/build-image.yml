@@ -17,7 +17,7 @@ env:
   AZ_SUBSCRIPTION_ID: ${{ secrets.AZ_SUBSCRIPTION_ID }}
   RG_NAME: "rg-hybrid-packer-sb"
   LOCATION: "eastus2"
-  GALLERY_NAME: "fa-hybrid-golden-images"  # no spaces
+  GALLERY_NAME: "fa_hybrid_golden_images"  # no spaces
   GALLERY_DESC: "FA Hybrid Golden Images Registry"
   IMAGE_DEF: "fa-oel-9-golden"            # image definition name
   IMAGE_VERSION: "1.0.0"
@@ -86,7 +86,7 @@ jobs:
             --resource-group "${RG_NAME}" \
             --template-file ./Infra/sig.bicep \
             --parameters @./Infra/sig.parameters.json \
-            --parameters galleryName=fa_hybrid_golden_images location="${LOCATION}" galleryDescription="FA Hybrid Golden Images Registry"
+            --parameters galleryName="${GALLERY_NAME}" location="${LOCATION}" galleryDescription="${GALLERY_DESC}"
 
       # 5) Ensure the image definition exists (idempotent)
       - name: "Ensure image definition"
