@@ -1,0 +1,5 @@
+location              = "eastus2"
+gallery_resource_group = "rg-hybrid-packer-sb"
+gallery_name          = "fa_hybrid_golden_images"
+image_definition_name = "fa-oel-9-golden"
+image_version         = "1.0.0"
