@@ -87,8 +87,8 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          if ! az sig image-definition show -g "${RG_NAME}" --gallery-name "${GALLERY_NAME}" -n "${IMAGE_DEF}" >/dev/null 2>&1; then
-            az sig image-definition create -g "${RG_NAME}" --gallery-name "${GALLERY_NAME}" -n "${IMAGE_DEF}" \
+          if ! az sig image-definition show -g "${RG_NAME}" --galleryName "${GALLERY_NAME}" -n "${IMAGE_DEF}" >/dev/null 2>&1; then
+            az sig image-definition create -g "${RG_NAME}" --galleryName "${GALLERY_NAME}" -n "${IMAGE_DEF}" \
               --publisher "FA" --offer "HybridOEL" --sku "oel-9" --os-type "Linux" --hyper-v-generation "V2" \
               --location "${LOCATION}"
           fi
