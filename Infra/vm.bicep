@@ -29,22 +29,27 @@ param vnetName string = 'fa-hybrid-vnet'
 @description('Existing Subnet Name')
 param subnetName string = 'default'
 
-
-// Build the SIG image ID
+//
+// Build the SIG image version resource ID (single interpolated string)
+//
 var sigImageId = '/subscriptions/${subscription().subscriptionId}' +
   '/resourceGroups/${resourceGroup().name}' +
   '/providers/Microsoft.Compute/galleries/${galleryName}/images/${imageDefinitionName}/versions/${imageVersion}'
+// ^ If your linter flags '+' concatenation, replace the above with a single line:
+// var sigImageId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Compute/galleries/${galleryName}/images/${imageDefinitionName}/versions/${imageVersion}'
 
-
-// Import existing VNET
+//
+// Existing VNet reference (recommended syntax per Bicep docs)
+//
 resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' existing = {
   name: vnetName
 }
 
 var subnetId = '${vnet.id}/subnets/${subnetName}'
 
-
+//
 // NIC
+//
 resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   name: '${vmName}-nic'
   location: location
@@ -63,8 +68,9 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-02-01' = {
   }
 }
 
-
-// VM
+//
+// VM using SIG image
+//
 resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
   name: vmName
   location: location
@@ -72,7 +78,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
     hardwareProfile: {
       vmSize: vmSize
     }
-
     osProfile: {
       computerName: vmName
       adminUsername: adminUsername
@@ -81,7 +86,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         disablePasswordAuthentication: false
       }
     }
-
     storageProfile: {
       imageReference: {
         id: sigImageId
@@ -93,7 +97,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
         }
       }
     }
-
     networkProfile: {
       networkInterfaces: [
         {
