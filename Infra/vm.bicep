@@ -1,22 +1,3 @@
-@description('Existing Virtual Network Name')
-param vnetName string = 'fa-hybrid-vnet'
-
-@description('Resource group where the VNet lives')
-param vnetResourceGroup string = resourceGroup().name
-
-@description('Existing Subnet Name')
-param subnetName string = 'default'
-
-/* Reference the existing VNet in the specified RG */
-resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' existing = {
-  name: vnetName
-  scope: resourceGroup(vnetResourceGroup)
-}
-
-/* Subnet ID under that VNet */
-var subnetId = '${vnet.id}/subnets/${subnetName}'
-
-
 @description('Name of the Virtual Machine')
 param vmName string = 'fa-oel9-vm01'
 
